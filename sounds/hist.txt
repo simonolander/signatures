@@ -1,0 +1,12 @@
+chaussure 27
+manette 20
+stade 26
+jeuvideo 20
+beckham 21
+zidane 18
+ballon 18
+gants 24
+sofoot 20
+girondins 16
+cocacola 16
+biere 19
