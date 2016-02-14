@@ -1,16 +1,21 @@
 #!/bin/python
 
 import sys
-import glob
+from glob import glob
+
 import matplotlib.pyplot
 
 import numpy
 
-if len(sys.argv) == 1:
-    print "Usage:", __file__, "file1 [file2] ..."
+if len(sys.argv) == 1 or (len(sys.argv) == 2 and sys.argv[1] == "-r"):
+    print "Usage:",
+    print __file__, "file1 [file2] ..."
     sys.exit(1)
 
-for file_name in sys.argv[1:]:
+else:
+    file_names = sys.argv[1:]
+
+for file_name in file_names:
     signature = []
     with open(file_name) as file:
                 for line in file.readlines():

@@ -38,16 +38,17 @@ def plot_sigs(*args):
 
 ##########
 
-hidden_signatures = hidden_signature.estimate_hidden_signature(data[0][0])
+user = 14
+hidden_signatures = hidden_signature.estimate_hidden_signature(data[user][0])
 
 for i, sig in enumerate(hidden_signatures):
     sg = sf = 0
-    for g in data[0][0]:
+    for g in data[user][0]:
         sg += score(sig, g)
-    for f in data[0][1]:
+    for f in data[user][1]:
         sf += score(sig, f)
-    sg /= len(data[0][0])
-    sf /= len(data[0][1])
+    sg /= len(data[user][0])
+    sf /= len(data[user][1])
     print "Hidden signature {}, genuine: {}".format(i, sg)
     print "Hidden signature {}, forgeries: {}".format(i, sf)
 
