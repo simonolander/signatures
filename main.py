@@ -1,16 +1,14 @@
 #!/bin/python
 from math import sqrt, ceil
 
-from numpy import array, ones, inf, mean, std, interp, linspace, arange, zeros, average
-from scipy.linalg import norm
 from dtw import dtw
 from matplotlib import pyplot as plt
-import svc_data
+import storage
 import hidden_signature
 
 # Read data
 
-data = svc_data.get_cleaned_data()
+data = storage.get_cleaned_data()
 
 # Score data
 
@@ -38,18 +36,9 @@ def plot_sigs(*args):
 
 ##########
 
-user = 14
-hidden_signatures = hidden_signature.estimate_hidden_signature(data[user][0])
+hids = storage.load_hidden_signatures()
 
-for i, sig in enumerate(hidden_signatures):
-    sg = sf = 0
-    for g in data[user][0]:
-        sg += score(sig, g)
-    for f in data[user][1]:
-        sf += score(sig, f)
-    sg /= len(data[user][0])
-    sf /= len(data[user][1])
-    print "Hidden signature {}, genuine: {}".format(i, sg)
-    print "Hidden signature {}, forgeries: {}".format(i, sf)
-
-plot_sigs(*hidden_signatures)
+for u in range(40):
+    print sum([score(hids[u], data[u][0][i]) for i in range(20)])
+    print sum([score(hids[u], data[u][1][i]) for i in range(20)])
+    print

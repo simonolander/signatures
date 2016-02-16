@@ -1,5 +1,13 @@
 
 import numpy as np
+import json
+
+
+class NumPyArrayEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
 
 
 def load_raw_data():
@@ -48,3 +56,13 @@ def get_cleaned_data():
 
     return data
 
+
+def store_hidden_signatures(hidden_signatures):
+    with open("hidden_signatures.json", mode="w") as fp:
+        json.dump(hidden_signatures, fp, cls=NumPyArrayEncoder)
+
+
+def load_hidden_signatures():
+    with open("hidden_signatures.json") as fp:
+        plist = json.load(fp)
+        return np.array(map(np.array, plist))
