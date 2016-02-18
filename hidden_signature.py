@@ -1,7 +1,7 @@
 from scipy.linalg import norm
 import numpy as np
 from dtw import dtw
-from multiprocessing import Pool
+import multiprocessing as mp
 import math
 from matplotlib import pyplot as plt
 import logging
@@ -60,7 +60,25 @@ def compute_error_vector(hidden_signature, signatures):
     return root_mean_square_error
 
 
-def estimate_hidden_signature(signatures, max_iterations=1000, epsilon=0.001):
+def iterate_hidden_signature_estimate(hidden_signature, signature):
+    n_samples, _ = hidden_signature.shape
+    _, _, _, path = dtw(hidden_signature, signature, distance)
+    sig_prime = np.zeros(shape=hidden_signature.shape)
+    num_x = np.zeros(shape=(n_samples, 1))
+
+    for (x, y) in zip(*path):
+        sig_prime[x] += signature[y]
+        num_x[x] += 1.
+
+    sig_prime /= num_x
+    return sig_prime
+
+
+def iterate_hidden_signature_estimate_star(args):
+    return iterate_hidden_signature_estimate(*args)
+
+
+def estimate_hidden_signature(signatures, max_iterations=1000, epsilon=0.001, n_jobs=1):
     """
     Creates an average "hidden" signature the signatures in signatures.
     The signatures are all supposed to come from the same author.
@@ -68,28 +86,27 @@ def estimate_hidden_signature(signatures, max_iterations=1000, epsilon=0.001):
     :param signatures: The set of signatures from some author
     :param max_iterations: The maximum number of iterations for improving the initial estimate
     :param epsilon: Break the iterative improvement of the signatures if the difference in score is less than epsilon
+    :param int n_jobs: The number of cores the process can use, -1 for all cores
     :return: The average "hidden" signature
     """
+    n_cores = int(n_jobs)
+    if n_cores == -1:
+        n_cores = None
+
     length = sum([len(x) for x in signatures]) / len(signatures)
     normalized_signatures = normalize_spaces(signatures, length)
     hidden = np.average(normalized_signatures, axis=0)
     old_score = dtw_avg_distance(hidden, normalized_signatures)
 
     break_step = -1
+
+    pool = mp.Pool()
+
     for k in range(max_iterations):
-        for n, sig in enumerate(signatures):
-            _, _, _, path = dtw(hidden, sig, distance)
-            sig_prime = normalized_signatures[n]
-            sig_prime.fill(0)
-            num_x = np.zeros(length)
-
-            for (x, y) in zip(*path):
-                sig_prime[x] += sig[y]
-                num_x[x] += 1
-
-            num_x.shape = (length, 1)
-            sig_prime /= num_x
-
+        normalized_signatures = pool.map(
+            iterate_hidden_signature_estimate_star,
+            [(hidden, sig) for sig in normalized_signatures]
+        )
         hidden = np.average(normalized_signatures, axis=0)
         new_score = dtw_avg_distance(hidden, normalized_signatures)
 
@@ -108,7 +125,7 @@ def estimate_hidden_signatures(user_signatures):
     :param user_signatures: array (n_users, n_genuine_signatures, n_samples (varied), n_features)
     :return:
     """
-    pool = Pool()
+    pool = mp.Pool()
     hidden_signatures = pool.map(estimate_hidden_signature, user_signatures)
     return hidden_signatures
 
